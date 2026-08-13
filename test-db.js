@@ -1,1 +1,0 @@
-const { neon } = require('@neondatabase/serverless'); require('dotenv').config({ path: '.env.local' }); async function run() { try { const sql = neon(process.env.DATABASE_URL); const res = await sql('SELECT 1 as test'); console.log('Success:', res); } catch(e) { console.error('Failed:', e); } } run();

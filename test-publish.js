@@ -1,1 +1,0 @@
-require('dotenv').config({ path: '.env.local' }); const { postService } = require('./src/services/post.service.js'); async function run() { try { console.log('Executing publish for post_2'); const success = await postService.executePublish('post_2'); console.log('Result:', success); } catch(e) { console.error('Failed:', e); } } run();
