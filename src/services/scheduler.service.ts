@@ -8,7 +8,7 @@ export class SchedulerService {
   constructor() {
     const token = process.env.QSTASH_TOKEN;
     const baseUrl = process.env.QSTASH_URL;
-    this.appUrl = process.env.APP_URL || "http://localhost:3000";
+    this.appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "";
     this.region = process.env.QSTASH_REGION || "US_EAST_1";
 
     if (token && !token.includes("placeholder")) {

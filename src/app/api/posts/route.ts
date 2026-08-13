@@ -20,8 +20,9 @@ export async function GET(req: Request) {
     const status = searchParams.get("status") || undefined;
     let posts = await postsService.getAll(status, userId);
 
-    // [Local Dev Simulator] Catch-up mechanism for missed scheduled posts
-    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const host = req.headers.get("host");
+    const protocol = req.headers.get("x-forwarded-proto") || "https";
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : "");
     if (appUrl.includes("localhost") || appUrl.includes("127.0.0.1")) {
       const overduePosts = posts.filter(p => p.status === "scheduled" && p.scheduled_at && new Date(p.scheduled_at).getTime() <= Date.now());
       
@@ -79,8 +80,10 @@ export async function POST(req: Request) {
 
     // QStash Automated Queue Dispatch
     if (status === "scheduled" && schedDate) {
+      const host = req.headers.get("host");
+      const protocol = req.headers.get("x-forwarded-proto") || "https";
+      const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : "");
       const qstashToken = process.env.QSTASH_TOKEN;
-      const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
       if (qstashToken && !qstashToken.includes("placeholder")) {
         try {

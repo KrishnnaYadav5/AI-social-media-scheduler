@@ -8,10 +8,10 @@ export class CloudflareR2Adapter implements StorageAdapter {
   private bucket: string;
 
   constructor() {
-    const accountId = process.env.R2_ACCOUNT_ID || "placeholder_account_id";
-    const accessKeyId = process.env.R2_ACCESS_KEY_ID || "placeholder_access_key";
-    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || "placeholder_secret_key";
-    this.bucket = process.env.R2_BUCKET_NAME || "social-media-assets";
+    const accountId = process.env.R2_ACCOUNT_ID || "";
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID || "";
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || "";
+    this.bucket = process.env.R2_BUCKET_NAME || "";
 
     this.client = new S3Client({
       region: "auto",

@@ -1,6 +1,6 @@
 import CryptoJS from "crypto-js";
 
-const SECRET = process.env.ENCRYPTION_SECRET || "default_super_secret_key_32_bytes_long_12345";
+const SECRET = process.env.ENCRYPTION_SECRET || "";
 
 /**
  * Encrypt sensitive user data (e.g. Gemini Studio API key) before storage in DB
