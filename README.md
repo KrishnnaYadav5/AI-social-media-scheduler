@@ -1,3 +1,6 @@
+# Deployed Link
+Click Here 👉 https://ai-social-media-scheduler-for-busne.vercel.app/login?redirectTo=%2Fdashboard
+
 # 🚀 AI Social Media Scheduler
 
 An intelligent, multi-platform AI Social Media Scheduler built with **Next.js 14 (App Router)**, **TypeScript**, **Tailwind CSS**, **Supabase (All-in-One: Auth, DB & Storage)**, **Drizzle ORM**, **Google Gemini AI**, and **Upstash QStash**.
