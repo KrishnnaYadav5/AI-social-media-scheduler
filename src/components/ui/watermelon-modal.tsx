@@ -15,7 +15,7 @@ export function WatermelonModal({ isOpen, onClose, title, children }: Watermelon
 
   return (
     <div
-      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 cursor-pointer"
+      className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 cursor-pointer"
       onClick={onClose}
     >
       <div

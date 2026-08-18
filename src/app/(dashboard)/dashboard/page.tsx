@@ -600,9 +600,19 @@ export default function DashboardOverviewPage() {
                   )}
                 </div>
               ) : (
-                filteredActivities.map((act) => (
-                  <WatermelonPostRow key={act.id} post={act} />
-                ))
+                <>
+                  {filteredActivities.slice(0, 3).map((act) => (
+                    <WatermelonPostRow key={act.id} post={act} />
+                  ))}
+                  
+                  {filteredActivities.length > 3 && (
+                    <div className="pt-2 text-center">
+                      <Link href="/posts" className="text-xs text-accent font-medium hover:underline">
+                        View all activity &rarr;
+                      </Link>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -25,27 +25,29 @@ export function WatermelonPostRow({
   onAction,
   actionLabel,
 }: WatermelonPostRowProps) {
+  // Data mapping fallback if title is missing
+  const postTitle = post.title || "Untitled Post";
+
   return (
-    <div className="p-4 bg-secondary/80 hover:bg-secondary border border-border rounded-md flex items-center justify-between gap-3 shadow-xs transition-colors">
-      <div className="flex items-center gap-3 min-w-0">
-        <div
-          className={`w-9 h-9 rounded-md flex items-center justify-center font-normal text-white shrink-0 shadow-xs ${
-            post.platform === "facebook" ? "bg-[#1877F2]" : "bg-[#E4405F]"
-          }`}
-        >
-          <SocialIcon platform={post.platform} className="w-4.5 h-4.5" />
+    <div className="flex items-start gap-4 p-4 rounded-2xl border border-border bg-card hover:border-accent/30 transition-colors group">
+      {/* Platform Icon Badge */}
+      <div className="relative mt-1 shrink-0">
+        <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center shadow-sm">
+          <SocialIcon platform={post.platform} className="w-5 h-5 text-white" />
         </div>
+      </div>
+      
+      <div className="flex flex-1 items-center justify-between gap-3 min-w-0">
         <div className="min-w-0">
-          <div className="text-xs sm:text-sm font-normal text-foreground truncate">{post.title}</div>
+          <div className="text-sm font-medium text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+            {postTitle}
+          </div>
           <div className="text-xs text-muted-foreground font-normal mt-0.5 flex items-center gap-2">
             <span>{post.accountName}</span>
             <span>•</span>
             <span>{post.timestamp}</span>
           </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2 shrink-0">
         <WatermelonBadge
           variant={
             post.status === "PUBLISHED"

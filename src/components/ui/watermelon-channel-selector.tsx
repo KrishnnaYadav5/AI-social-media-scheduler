@@ -406,7 +406,7 @@ export function WatermelonChannelSelector({
 
       {/* Remove Account Confirmation Modal */}
       {accountToRemove && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+        <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center gap-3 text-red-500">
               <div className="p-2.5 bg-red-500/10 rounded-xl border border-red-500/30 shrink-0">

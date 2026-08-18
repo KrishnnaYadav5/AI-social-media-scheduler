@@ -76,13 +76,13 @@ export default function SocialAccountsPage() {
 
   // Load accounts from Supabase & localStorage on mount
   useEffect(() => {
-    let localAccs: AccountItem[] = [];
+    let localAccs: AccountItem[] | null = null;
     try {
       const raw = localStorage.getItem("social_accounts_v1");
       if (raw) localAccs = JSON.parse(raw);
     } catch {}
 
-    if (localAccs.length > 0) {
+    if (localAccs !== null) {
       setAccounts(localAccs);
     } else {
       setAccounts(initialAccounts);
@@ -94,7 +94,7 @@ export default function SocialAccountsPage() {
     fetch("/api/accounts")
       .then((r) => r.json())
       .then((data) => {
-        if (data.accounts && data.accounts.length > 0) {
+        if (data.accounts && Array.isArray(data.accounts)) {
           const mapped: AccountItem[] = data.accounts.map((a: any) => ({
             id: a.id,
             platform: a.platform as "facebook" | "instagram",
@@ -146,8 +146,30 @@ export default function SocialAccountsPage() {
   const [igConnecting, setIgConnecting] = useState(false);
   const [igMessage, setIgMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Multi-select state
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
+
   // Confirmation Modal state
-  const [modalTarget, setModalTarget] = useState<{ id: string | "all"; action: "disconnect" | "remove" | "removeAll" } | null>(null);
+  const [modalTarget, setModalTarget] = useState<{
+    id: string | "all" | "selected";
+    action: "disconnect" | "remove" | "removeAll" | "removeSelected";
+  } | null>(null);
+
+  // Toggle selection for a single account
+  const handleToggleSelect = (id: string) => {
+    setSelectedAccountIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  // Select / Deselect all accounts
+  const handleSelectAll = () => {
+    if (selectedAccountIds.length === accounts.length && accounts.length > 0) {
+      setSelectedAccountIds([]);
+    } else {
+      setSelectedAccountIds(accounts.map((a) => a.id));
+    }
+  };
 
   // Test Connection Health Check
   const handleTestDiagnostic = (id: string) => {
@@ -190,10 +212,20 @@ export default function SocialAccountsPage() {
         try { localStorage.setItem("social_accounts_v1", JSON.stringify(updated)); } catch {}
         return updated;
       });
+      setSelectedAccountIds((prev) => prev.filter((id) => id !== modalTarget.id));
+    } else if (modalTarget.action === "removeSelected") {
+      await Promise.all(selectedAccountIds.map((id) => fetch(`/api/accounts/${id}`, { method: "DELETE" })));
+      setAccounts((prev) => {
+        const updated = prev.filter((a) => !selectedAccountIds.includes(a.id));
+        try { localStorage.setItem("social_accounts_v1", JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+      setSelectedAccountIds([]);
     } else if (modalTarget.action === "removeAll") {
       const ids = accounts.map((a) => a.id);
       await Promise.all(ids.map((id) => fetch(`/api/accounts/${id}`, { method: "DELETE" })));
       setAccounts([]);
+      setSelectedAccountIds([]);
       try { localStorage.removeItem("social_accounts_v1"); } catch {}
     }
     setModalTarget(null);
@@ -428,7 +460,18 @@ export default function SocialAccountsPage() {
             </div>
 
             {accounts.length > 0 ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                {selectedAccountIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setModalTarget({ id: "selected", action: "removeSelected" })}
+                    className="px-3.5 py-2.5 bg-danger hover:bg-danger/90 text-white text-xs font-normal rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer animate-in fade-in"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Selected ({selectedAccountIds.length})</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setModalTarget({ id: "all", action: "removeAll" })}
@@ -436,7 +479,7 @@ export default function SocialAccountsPage() {
                   title="Remove all connected accounts"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>Delete All Accounts</span>
+                  <span>Delete All</span>
                 </button>
                 <button
                   type="button"
@@ -465,18 +508,45 @@ export default function SocialAccountsPage() {
               {accounts.map((acc) => {
                 const isConnected = acc.status === "connected";
                 const isTesting = testingId === acc.id;
+                const isSelected = selectedAccountIds.includes(acc.id);
 
                 return (
                   <div
                     key={acc.id}
-                    className="aspect-square p-5 bg-card border border-border rounded-2xl flex flex-col items-center justify-between text-center shadow-md hover:border-accent/50 transition-all relative group"
+                    className={`min-h-[280px] sm:aspect-square p-5 bg-card border rounded-2xl flex flex-col items-center justify-between text-center shadow-md transition-all relative group cursor-pointer ${
+                      isSelected
+                        ? "border-accent ring-2 ring-accent/30 bg-accent/[0.02]"
+                        : "border-border hover:border-accent/50"
+                    }`}
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      if (target.closest("button") || target.closest("a")) return;
+                      handleToggleSelect(acc.id);
+                    }}
                   >
-                    {/* Header: Platform Name & Status Badge */}
-                    <div className="w-full flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-[11px] font-normal text-muted-foreground uppercase tracking-wider">
-                        <SocialIcon platform={acc.platform} className="w-3.5 h-3.5 shrink-0" />
-                        <span>{acc.platform}</span>
-                      </span>
+                    {/* Header: Checkbox & Platform Name & Status Badge */}
+                    <div className="w-full flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleSelect(acc.id);
+                          }}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                            isSelected
+                              ? "bg-accent border-accent text-white"
+                              : "border-muted-foreground/40 bg-secondary hover:border-accent"
+                          }`}
+                          title={isSelected ? "Deselect account" : "Select account"}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </button>
+                        <span className="flex items-center gap-1.5 text-[11px] font-normal text-muted-foreground uppercase tracking-wider">
+                          <SocialIcon platform={acc.platform} className="w-3.5 h-3.5 shrink-0" />
+                          <span>{acc.platform}</span>
+                        </span>
+                      </div>
                       {isConnected ? (
                         <WatermelonBadge variant="accent">
                           CONNECTED
@@ -580,39 +650,39 @@ export default function SocialAccountsPage() {
       {mainTab === "setup" && (
         <div className="space-y-8 max-w-3xl mx-auto py-2">
           {/* Sub-Tab Selector: Facebook (Blue when clicked) vs Instagram (Pink when clicked) - Text & Icon stay white */}
-          <div className="p-2 bg-secondary dark:bg-black border border-border dark:border-stone-800 rounded-2xl flex items-center gap-2.5 w-full shadow-md">
+          <div className="p-2 bg-secondary dark:bg-black border border-border dark:border-stone-800 rounded-2xl flex items-center gap-2 sm:gap-2.5 w-full shadow-md">
             <button
               type="button"
               onClick={() => setSetupPlatform("facebook")}
-              className={`flex-1 py-3.5 px-4 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2.5 ${
+              className={`flex-1 py-3 px-2 sm:py-3.5 sm:px-4 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 ${
                 setupPlatform === "facebook"
                   ? "bg-[#1877F2] text-white font-normal shadow-lg scale-[1.01]"
                   : "bg-stone-800/80 text-stone-400 hover:text-white hover:bg-stone-700 border border-stone-700/60 font-normal"
               }`}
             >
               <SocialIcon platform="facebook" className="w-4 h-4 shrink-0" />
-              <span>Facebook Page Meta API</span>
+              <span>Facebook Page <span className="hidden sm:inline">Meta API</span></span>
             </button>
 
-            <span className="text-muted-foreground dark:text-white font-normal text-lg px-1 shrink-0">|</span>
+            <span className="text-muted-foreground dark:text-white font-normal text-lg px-0.5 sm:px-1 shrink-0">|</span>
 
             <button
               type="button"
               onClick={() => setSetupPlatform("instagram")}
-              className={`flex-1 py-3.5 px-4 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2.5 ${
+              className={`flex-1 py-3 px-2 sm:py-3.5 sm:px-4 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 ${
                 setupPlatform === "instagram"
                   ? "bg-pink-600 text-white font-normal shadow-lg scale-[1.01]"
                   : "bg-stone-800/80 text-stone-400 hover:text-white hover:bg-stone-700 border border-stone-700/60 font-normal"
               }`}
             >
               <SocialIcon platform="instagram" className="w-4 h-4 shrink-0" />
-              <span>Instagram Business Meta API</span>
+              <span>Instagram Business <span className="hidden sm:inline">Meta API</span></span>
             </button>
           </div>
 
           {/* Form 1: Facebook Page API Config */}
           {setupPlatform === "facebook" && (
-            <div className="p-8 bg-card border border-border rounded-2xl space-y-6 shadow-md">
+            <div className="p-5 sm:p-8 bg-card border border-border rounded-2xl space-y-6 shadow-md">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
                 <div>
                   <h2 className="text-base font-normal text-foreground flex items-center gap-2">
@@ -715,11 +785,11 @@ export default function SocialAccountsPage() {
                         <span className="text-foreground font-normal">Step 2 — Exchange for Long-Lived Token (60 Days)</span>
                       </div>
 
-                      <p className="text-muted-foreground font-normal pl-7">
+                      <p className="text-muted-foreground font-normal pl-0 sm:pl-7">
                         Open a new browser tab and execute the following HTTP GET request:
                       </p>
 
-                      <div className="ml-7 p-3 bg-secondary border border-border rounded-md space-y-1.5 font-mono text-[11px] text-foreground select-all break-all">
+                      <div className="ml-0 sm:ml-7 p-3 bg-secondary border border-border rounded-md space-y-1.5 font-mono text-[11px] text-foreground select-all break-all">
                         {`https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id={APP_ID}&client_secret={APP_SECRET}&fb_exchange_token={SHORT_LIVED_TOKEN}`}
                       </div>
 
@@ -923,11 +993,11 @@ export default function SocialAccountsPage() {
                         <span className="text-foreground font-normal">Step 2 — Long-Lived User Token (60 days, for Instagram)</span>
                       </div>
 
-                      <p className="text-muted-foreground font-normal pl-7">
+                      <p className="text-muted-foreground font-normal pl-0 sm:pl-7">
                         Open a new browser tab and paste:
                       </p>
 
-                      <div className="ml-7 p-3 bg-secondary border border-border rounded-md space-y-1.5 font-mono text-[11px] text-foreground select-all break-all">
+                      <div className="ml-0 sm:ml-7 p-3 bg-secondary border border-border rounded-md space-y-1.5 font-mono text-[11px] text-foreground select-all break-all">
                         {`https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id={APP_ID}&client_secret={APP_SECRET}&fb_exchange_token={SHORT_LIVED_TOKEN}`}
                       </div>
 
@@ -1036,6 +1106,8 @@ export default function SocialAccountsPage() {
         title={
           modalTarget?.action === "disconnect"
             ? "Disconnect Social Channel?"
+            : modalTarget?.action === "removeSelected"
+            ? `Delete ${selectedAccountIds.length} Selected Account${selectedAccountIds.length > 1 ? "s" : ""}?`
             : modalTarget?.action === "removeAll"
             ? "Delete All Social Accounts?"
             : "Delete Account Permanently?"
@@ -1043,6 +1115,8 @@ export default function SocialAccountsPage() {
         description={
           modalTarget?.action === "disconnect"
             ? "Are you sure you want to disconnect this account? Scheduled posts for this channel will be paused until re-connected."
+            : modalTarget?.action === "removeSelected"
+            ? `Are you sure you want to permanently delete ${selectedAccountIds.length} selected social media account${selectedAccountIds.length > 1 ? "s" : ""}? Scheduled posts for these channels will be cleared.`
             : modalTarget?.action === "removeAll"
             ? "Are you sure you want to permanently remove all connected social media accounts? Scheduled posts for all channels will be cleared."
             : "Are you sure you want to permanently delete this account from your active channel list?"
@@ -1050,6 +1124,8 @@ export default function SocialAccountsPage() {
         confirmText={
           modalTarget?.action === "disconnect"
             ? "Disconnect Channel"
+            : modalTarget?.action === "removeSelected"
+            ? `Delete ${selectedAccountIds.length} Account${selectedAccountIds.length > 1 ? "s" : ""}`
             : modalTarget?.action === "removeAll"
             ? "Delete All Accounts"
             : "Delete Account"

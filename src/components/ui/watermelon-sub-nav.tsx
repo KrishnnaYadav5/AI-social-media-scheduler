@@ -39,7 +39,7 @@ export function WatermelonSubNav<T extends string = string>({
 
   return (
     <div
-      className={`px-3 sm:px-4 py-2 bg-gray-100/90 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl flex items-center gap-2 shadow-md flex-nowrap overflow-hidden ${containerWidthClass} ${className}`}
+      className={`px-3 sm:px-4 py-2 bg-gray-100/90 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl flex items-center gap-2 shadow-md flex-nowrap overflow-x-auto scrollbar-none ${containerWidthClass} ${className}`}
     >
       {items.map((item, idx) => {
         const Icon = item.icon;
