@@ -97,12 +97,12 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-3">
+          {/* Submit & Demo Buttons */}
+          <div className="pt-3 space-y-2.5">
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-black font-normal text-xs sm:text-sm py-3.5 rounded-xl shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-black font-normal text-xs sm:text-sm py-3.5 rounded-xl shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer"
             >
               {loading ? (
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -114,6 +114,13 @@ export default function LoginPage() {
               )}
               <span>{loading ? "Signing in..." : "Sign In"}</span>
             </button>
+
+            <Link
+              href="/dashboard"
+              className="w-full flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-normal text-xs sm:text-sm py-3 rounded-xl transition-all cursor-pointer"
+            >
+              <span>Explore Dashboard (Demo Access)</span>
+            </Link>
           </div>
         </form>
 

@@ -55,7 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
+    if (error) {
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        return {
+          error: "Email not confirmed. Please check your inbox for the Supabase confirmation link, or disable 'Confirm Email' in your Supabase Dashboard (Auth → Email Provider).",
+        };
+      }
+      return { error: error.message };
+    }
     router.push("/dashboard");
     return { error: null };
   };
